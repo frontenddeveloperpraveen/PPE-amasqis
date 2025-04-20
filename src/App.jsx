@@ -11,35 +11,39 @@ import NotFound from "./pages/NotFound";
 import Overview from "./pages/overviewpage";
 import Feeds from "./pages/Feeds";
 import SettingsPage from "./pages/SettingsPage";
-
+import { CookiesProvider } from "react-cookie";
 import "./style.css";
 import LoginPage from "./pages/login";
+import RegisterPage from "./pages/register";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/" element={<Navigate to="/overview" replace />} />
-          <Route path="/" element={<Layout />}>
-            {/* <Route index element={<IncidentReport />} /> */}
-            {/* <Route path="/health-monitoring" element={<HealthMonitoring />} /> */}
-            <Route path="/overview" element={<Overview />} />
-            <Route path="/incident-report" element={<IncidentReport />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/feed" element={<Feeds />} />
-            <Route path="performance" element={<PerformanceAnalytics />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <CookiesProvider defaultSetOptions={{ path: "/" }}>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/" element={<Navigate to="/overview" replace />} />
+            <Route path="/" element={<Layout />}>
+              {/* <Route index element={<IncidentReport />} /> */}
+              {/* <Route path="/health-monitoring" element={<HealthMonitoring />} /> */}
+              <Route path="/overview" element={<Overview />} />
+              <Route path="/incident-report" element={<IncidentReport />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/feed" element={<Feeds />} />
+              <Route path="performance" element={<PerformanceAnalytics />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </CookiesProvider>
 );
 
 export default App;

@@ -1,15 +1,64 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Searchbar from "../components/SearchBar_Filters";
 import Camerafeed from "../components/Camerafeed";
 import ChartLineGraph from "../components/ChartLineGraph.jsx";
 import ChartBarGraph from "../components/ChartBarGraph";
 import ChartWaveGraph from "../components/ChartWaveGraph.jsx";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import BASE from "../BASE";
+import { useCookies } from "react-cookie";
 
 function Overview() {
   // All data organized in a single JSON object
   const navigate = useNavigate();
-  const dashboardData = {
+  const [cookies] = useCookies(["token"]);
+
+  const [filters, setfilters] = useState({
+    location: "All",
+    camera: "All",
+    date: null,
+    time: null,
+    alertType: "All",
+    incidentType: "All",
+  });
+
+  const fetchOverview = async () => {
+    try {
+      const token = cookies.token;
+      if (!token) {
+        console.error("No token found.");
+        return;
+      }
+
+      const response = await axios.post(
+        `${BASE}overview`,
+        filters, // send filters object directly
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("Overview data:", response.data);
+      setdashboardData(response.data); // Update state with fetched data
+      // setisPageLoading(false);
+      // TODO: Handle data (e.g., set state)
+    } catch (error) {
+      console.error("Error fetching overview:", error);
+    }
+  };
+
+  useEffect(() => {
+    console.log(filters);
+    fetchOverview();
+  }, [filters]);
+
+  const [isPageLoading, setisPageLoading] = useState(true);
+
+  const [dashboardData, setdashboardData] = useState({
     efficiencyChartData: [
       { week: "Week 1", value: 75, zone: "Zone 1" },
       { week: "Week 2", value: 85, zone: "Zone 2" },
@@ -71,7 +120,7 @@ function Overview() {
         name: "Parking Lot",
         location: "North Parking",
         isLive: false,
-        streamUrl: "rtsp://example.com/stream2",
+        streamUrl: "http://172.25.160.37:5000/",
       },
       {
         id: 3,
@@ -90,90 +139,108 @@ function Overview() {
       efficiencyChange: "+2%",
       responseTimeChange: "-3%",
     },
-  };
+  });
+
+  useEffect(() => {
+    if (isPageLoading) {
+      fetchOverview();
+      setisPageLoading(false);
+    }
+  }, []);
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-3xl font-bold">Overview</h1>
-      <Searchbar />
-      <Camerafeed cameras={dashboardData.cameraData} />
+    <>
+      {isPageLoading ? (
+        <div className="flex items-center justify-center h-screen">
+          <div className="loader">Loading</div>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          <h1 className="text-3xl font-bold">Overview</h1>
+          <Searchbar
+            onFilterChange={(filters) => {
+              console.log("Filters changed:", filters);
+              setfilters(filters);
+            }}
+          />
+          <Camerafeed cameras={dashboardData.cameraData} />
 
-      {/* Analytics Overview */}
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">Analytics Overview</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Site Security Alerts with Bar Graph */}
-          <div className="border rounded-xl p-4 shadow-sm">
-            <h3 className="text-lg font-medium">Site Security Alerts</h3>
-            <p className="text-2xl font-bold">
-              {dashboardData.stats.securityAlerts} Alerts
-            </p>
-            <p className="text-sm text-gray-500">
-              Last 24 hours{" "}
-              <span className="text-green-500">
-                {dashboardData.stats.alertChange}
-              </span>
-            </p>
-            <div className="mt-4 h-40">
-              <ChartBarGraph
-                data={dashboardData.alertTrends}
-                dataKey="day"
-                valueKey="alerts"
-                barColor="#F5F0E5"
-              />
-            </div>
-            <div className="flex justify-between mt-2 text-xs text-gray-500">
-              {dashboardData.alertTrends.map((item, index) => (
-                <span key={index}>{item.zone}</span>
-              ))}
-            </div>
-          </div>
+          {/* Analytics Overview */}
+          <section>
+            <h2 className="text-2xl font-semibold mb-4">Analytics Overview</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Site Security Alerts with Bar Graph */}
+              <div className="border rounded-xl p-4 shadow-sm">
+                <h3 className="text-lg font-medium">Site Security Alerts</h3>
+                <p className="text-2xl font-bold">
+                  {dashboardData.stats.securityAlerts} Alerts
+                </p>
+                <p className="text-sm text-gray-500">
+                  Last 24 hours{" "}
+                  <span className="text-green-500">
+                    {dashboardData.stats.alertChange}
+                  </span>
+                </p>
+                <div className="mt-4 h-40">
+                  <ChartBarGraph
+                    data={dashboardData.alertTrends}
+                    dataKey="day"
+                    valueKey="alerts"
+                    barColor="#F5F0E5"
+                  />
+                </div>
+                <div className="flex justify-between mt-2 text-xs text-gray-500">
+                  {dashboardData.alertTrends.map((item, index) => (
+                    <span key={index}>{item.zone}</span>
+                  ))}
+                </div>
+              </div>
 
-          {/* Operational Efficiency with Wave Graph */}
-          <div className="border rounded-xl p-4 shadow-sm">
-            <h3 className="text-lg font-medium">Operational Efficiency</h3>
-            <p className="text-2xl font-bold">
-              {dashboardData.stats.operationalEfficiency}% Efficiency
-            </p>
-            <p className="text-sm text-gray-500">
-              Last week{" "}
-              <span className="text-green-500">
-                {dashboardData.stats.efficiencyChange}
-              </span>
-            </p>
-            <div className="mt-4 h-40">
-              <ChartWaveGraph
-                data={dashboardData.performanceMetrics}
-                dataKey="hour"
-                valueKey="performance"
-                waveColor="#757575"
-              />
-            </div>
-            <div className="flex justify-between mt-2 text-xs text-gray-500">
-              {dashboardData.performanceMetrics
-                .filter((_, index) => index % 2 === 0)
-                .map((item, index) => (
-                  <span key={index}>{item.zone}</span>
-                ))}
-            </div>
-          </div>
+              {/* Operational Efficiency with Wave Graph */}
+              <div className="border rounded-xl p-4 shadow-sm">
+                <h3 className="text-lg font-medium">Operational Efficiency</h3>
+                <p className="text-2xl font-bold">
+                  {dashboardData.stats.operationalEfficiency}% Efficiency
+                </p>
+                <p className="text-sm text-gray-500">
+                  Last week{" "}
+                  <span className="text-green-500">
+                    {dashboardData.stats.efficiencyChange}
+                  </span>
+                </p>
+                <div className="mt-4 h-40">
+                  <ChartWaveGraph
+                    data={dashboardData.performanceMetrics}
+                    dataKey="hour"
+                    valueKey="performance"
+                    waveColor="#757575"
+                  />
+                </div>
+                <div className="flex justify-between mt-2 text-xs text-gray-500">
+                  {dashboardData.performanceMetrics
+                    .filter((_, index) => index % 2 === 0)
+                    .map((item, index) => (
+                      <span key={index}>{item.zone}</span>
+                    ))}
+                </div>
+              </div>
 
-          {/* Incident Response Time */}
-          <div className="md:col-span-2 border rounded-xl p-4 shadow-sm">
-            <h3 className="text-lg font-medium">Incident Response Time</h3>
-            <p className="text-2xl font-bold text-red-600">
-              {dashboardData.stats.incidentResponseTime} mins
-            </p>
-            <p className="text-sm text-gray-500">
-              Last month{" "}
-              <span className="text-red-500">
-                {dashboardData.stats.responseTimeChange}
-              </span>
-            </p>
+              {/* Incident Response Time */}
+              <div className="md:col-span-2 border rounded-xl p-4 shadow-sm">
+                <h3 className="text-lg font-medium">Incident Response Time</h3>
+                <p className="text-2xl font-bold text-red-600">
+                  {dashboardData.stats.incidentResponseTime} mins
+                </p>
+                <p className="text-sm text-gray-500">
+                  Last month{" "}
+                  <span className="text-red-500">
+                    {dashboardData.stats.responseTimeChange}
+                  </span>
+                </p>
 
-            <div className="mt-6 h-64 flex">
-              {/* Vertical Month Labels */}
-              {/* <div className="flex flex-col justify-between h-full mr-2 pb-7">
+                <div className="mt-6 h-64 flex">
+                  {/* Vertical Month Labels */}
+                  {/* <div className="flex flex-col justify-between h-full mr-2 pb-7">
                 {dashboardData.monthlyResponse.map((item, index) => (
                   <div
                     key={index}
@@ -184,52 +251,54 @@ function Overview() {
                 ))}
               </div> */}
 
-              {/* Bar Chart */}
-              <div className="flex-grow">
-                <ChartBarGraph
-                  data={dashboardData.monthlyResponse}
-                  dataKey="month"
-                  valueKey="value"
-                  barColor="#F5F0E5"
-                  horizontal={true}
-                />
+                  {/* Bar Chart */}
+                  <div className="flex-grow">
+                    <ChartBarGraph
+                      data={dashboardData.monthlyResponse}
+                      dataKey="month"
+                      valueKey="value"
+                      barColor="#F5F0E5"
+                      horizontal={true}
+                    />
+                  </div>
+                </div>
+
+                {/* Zone Labels */}
               </div>
             </div>
+          </section>
 
-            {/* Zone Labels */}
-          </div>
-        </div>
-      </section>
-
-      {/* Summary Reports */}
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">Summary Reports</h2>
-        <div className="space-y-4">
-          {dashboardData.summaryReports.map((report, index) => (
-            <div
-              key={index}
-              className="flex items-center border rounded-xl p-4 shadow-sm"
-            >
-              <div className="flex-grow">
-                <h4 className="text-lg font-medium">{report.title}</h4>
-                <p className="text-sm text-gray-500">{report.subtitle}</p>
-                <button
-                  className="mt-2 text-sm text-white bg-black px-4 py-1 rounded-full hover:bg-gray-800"
-                  onClick={() => navigate("/incident-report")}
+          {/* Summary Reports */}
+          <section>
+            <h2 className="text-2xl font-semibold mb-4">Summary Reports</h2>
+            <div className="space-y-4">
+              {dashboardData.summaryReports.map((report, index) => (
+                <div
+                  key={index}
+                  className="flex items-center border rounded-xl p-4 shadow-sm"
                 >
-                  View Report →
-                </button>
-              </div>
-              <img
-                src={report.img}
-                alt={report.title}
-                className="h-20 w-32 rounded-lg object-cover ml-4"
-              />
+                  <div className="flex-grow">
+                    <h4 className="text-lg font-medium">{report.title}</h4>
+                    <p className="text-sm text-gray-500">{report.subtitle}</p>
+                    <button
+                      className="mt-2 text-sm text-white bg-black px-4 py-1 rounded-full hover:bg-gray-800"
+                      onClick={() => navigate("/incident-report")}
+                    >
+                      View Report →
+                    </button>
+                  </div>
+                  <img
+                    src={report.img}
+                    alt={report.title}
+                    className="h-20 w-32 rounded-lg object-cover ml-4"
+                  />
+                </div>
+              ))}
             </div>
-          ))}
+          </section>
         </div>
-      </section>
-    </div>
+      )}
+    </>
   );
 }
 

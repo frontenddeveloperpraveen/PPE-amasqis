@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Calendar, ChevronDown, Search } from "lucide-react";
 import { Bar, Line } from "react-chartjs-2";
+import axios from "axios";
+import { useCookies } from "react-cookie";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,6 +14,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import BASE from "../BASE";
 
 // Register ChartJS components
 ChartJS.register(
@@ -106,9 +109,36 @@ const DatePicker = ({ value, onChange, maxDate, minDate, placeholder }) => {
   );
 };
 
-// Data structure for backend integration
-const incidentReportData = {
-  filters: {
+const IncidentReport = () => {
+  const [cookies] = useCookies(["token"]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Initialize data with default values to prevent undefined errors
+  const [data, setData] = useState({
+    recentReports: [],
+    incidents: [],
+    statistics: {
+      incidentTrends: {
+        total: 0,
+        change: "+0%",
+        categories: [],
+      },
+      cameraActivity: {
+        totalHours: 0,
+        change: "+0%",
+        locations: [],
+      },
+    },
+    locations: [],
+    cameraIds: [],
+    personnelList: [],
+    incidentTypes: [],
+    statusOptions: [],
+  });
+
+  // State management
+  const [filters, setFilters] = useState({
     dateRange: {
       startDate: "",
       endDate: "",
@@ -116,125 +146,111 @@ const incidentReportData = {
     location: "",
     cameraId: "",
     incidentType: "",
-    tags: "",
     status: "",
     personnel: "",
-  },
-  recentReports: [
-    { id: 1, name: "Warehouse Entry", status: "Under Review" },
-    { id: 2, name: "Oil Rig Slips", status: "Resolved" },
-    { id: 3, name: "Unauthorized Access", status: "Under Review" },
-  ],
-  incidents: [
-    {
-      id: 1,
-      timestamp: "2025-01-01 10:00",
-      location: "Main Gate",
-      event: "Unauthorized Access",
-      personnel: "John Smith",
-      status: "Resolved",
-      cameraId: "CAM-001",
-    },
-    {
-      id: 2,
-      timestamp: "2025-01-01 09:30",
-      location: "Warehouse Entry",
-      event: "Suspicious Activity",
-      personnel: "Jane Doe",
-      status: "Under Review",
-      cameraId: "CAM-002",
-    },
-    {
-      id: 3,
-      timestamp: "2025-01-01 08:45",
-      location: "Parking Lot",
-      event: "Theft Detected",
-      personnel: "Michael Brown",
-      status: "Resolved",
-      cameraId: "CAM-003",
-    },
-    {
-      id: 4,
-      timestamp: "2025-01-01 07:20",
-      location: "Control Room",
-      event: "System Alert",
-      personnel: "Emily Davis",
-      status: "Under Review",
-      cameraId: "CAM-004",
-    },
-    {
-      id: 5,
-      timestamp: "2025-01-01 06:50",
-      location: "Back Gate",
-      event: "Unauthorized Access",
-      personnel: "Chris Johnson",
-      status: "Resolved",
-      cameraId: "CAM-005",
-    },
-  ],
-  statistics: {
-    incidentTrends: {
-      total: 50,
-      change: "+10%",
-      categories: [
-        { name: "Unauthorized Access", value: 20 },
-        { name: "Oil Spill", value: 12 },
-        { name: "System Alert", value: 18 },
-      ],
-    },
-    cameraActivity: {
-      totalHours: 120,
-      change: "-5%",
-      locations: [
-        { name: "Main Gate", value: 45 },
-        { name: "Parking Lot", value: 35 },
-        { name: "Warehouse", value: 40 },
-      ],
-    },
-  },
-};
+  });
 
-// Simulate API call for locations and camera IDs
-const fetchLocations = async () => {
-  return [...new Set(incidentReportData.incidents.map((i) => i.location))];
-};
-
-const fetchCameraIds = async () => {
-  return [...new Set(incidentReportData.incidents.map((i) => i.cameraId))];
-};
-
-const IncidentReport = () => {
-  // State management
-  const [filters, setFilters] = useState(incidentReportData.filters);
   const [dropdowns, setDropdowns] = useState({
     incidentType: false,
-    tags: false,
     status: false,
     personnel: false,
     location: false,
     cameraId: false,
   });
+
   const [searchTerms, setSearchTerms] = useState({
     incidentType: "",
-    tags: "",
     status: "",
     personnel: "",
     location: "",
     cameraId: "",
   });
-  const [locations, setLocations] = useState([]);
-  const [cameraIds, setCameraIds] = useState([]);
 
-  // Load locations and camera IDs on component mount
+  // Fetch initial data
   useEffect(() => {
-    const loadData = async () => {
-      const locs = await fetchLocations();
-      const cams = await fetchCameraIds();
-      setLocations(locs);
-      setCameraIds(cams);
+    const fetchData = async () => {
+      try {
+        const token = cookies.token;
+        if (!token) {
+          throw new Error("No authentication token found");
+        }
+
+        // Fetch all necessary data
+        const [incidentsRes, statsRes, optionsRes] = await Promise.all([
+          axios.get(BASE + "api/incidents", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+          axios.get(BASE + "api/incidents/stats", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+          axios.get(BASE + "api/incidents/options", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+        ]);
+
+        setData({
+          recentReports: incidentsRes.data.recentReports || [],
+          incidents: incidentsRes.data.incidents || [],
+          statistics: {
+            incidentTrends: statsRes.data.incidentTrends || {
+              total: 0,
+              change: "+0%",
+              categories: [],
+            },
+            cameraActivity: statsRes.data.cameraActivity || {
+              totalHours: 0,
+              change: "+0%",
+              locations: [],
+            },
+          },
+          locations: optionsRes.data.locations || [],
+          cameraIds: optionsRes.data.cameraIds || [],
+          personnelList: optionsRes.data.personnelList || [],
+          incidentTypes: optionsRes.data.incidentTypes || [],
+          statusOptions: optionsRes.data.statusOptions || [],
+        });
+      } catch (err) {
+        setError(err.message);
+        console.error("Error fetching data:", err);
+      } finally {
+        setIsLoading(false);
+      }
     };
-    loadData();
-  }, []);
+
+    fetchData();
+  }, [cookies.token]);
+
+  // Filter incidents when filters change
+  const [filteredIncidents, setFilteredIncidents] = useState([]);
+  useEffect(() => {
+    if (!data.incidents || data.incidents.length === 0) {
+      setFilteredIncidents([]);
+      return;
+    }
+
+    const filtered = data.incidents.filter((incident) => {
+      const incidentDate = incident.timestamp?.split(" ")[0] || "";
+      return (
+        (!filters.dateRange.startDate ||
+          incidentDate >= filters.dateRange.startDate) &&
+        (!filters.dateRange.endDate ||
+          incidentDate <= filters.dateRange.endDate) &&
+        (!filters.location || incident.location?.includes(filters.location)) &&
+        (!filters.cameraId || incident.cameraId?.includes(filters.cameraId)) &&
+        (!filters.incidentType || incident.event === filters.incidentType) &&
+        (!filters.status || incident.status === filters.status) &&
+        (!filters.personnel || incident.personnel?.includes(filters.personnel))
+      );
+    });
+
+    setFilteredIncidents(filtered);
+  }, [filters, data.incidents]);
 
   // Filter handlers
   const handleFilterChange = (filterName, value) => {
@@ -275,74 +291,46 @@ const IncidentReport = () => {
     return new Date().toISOString().split("T")[0];
   };
 
-  // Filter incidents based on current filters
-  const filteredIncidents = incidentReportData.incidents.filter((incident) => {
-    const incidentDate = incident.timestamp.split(" ")[0];
-    return (
-      (!filters.dateRange.startDate ||
-        incidentDate >= filters.dateRange.startDate) &&
-      (!filters.dateRange.endDate ||
-        incidentDate <= filters.dateRange.endDate) &&
-      (!filters.location || incident.location.includes(filters.location)) &&
-      (!filters.cameraId || incident.cameraId.includes(filters.cameraId)) &&
-      (!filters.incidentType || incident.event === filters.incidentType) &&
-      (!filters.status || incident.status === filters.status) &&
-      (!filters.personnel || incident.personnel.includes(filters.personnel))
-    );
-  });
-
   // Options for dropdowns with search functionality
   const getFilteredOptions = (dropdownName) => {
     const searchTerm = searchTerms[dropdownName]?.toLowerCase() || "";
 
     switch (dropdownName) {
       case "incidentType":
-        return [
-          ...new Set(
-            incidentReportData.incidents
-              .map((i) => i.event)
-              .filter((event) => event.toLowerCase().includes(searchTerm))
-          ),
-        ];
+        return (data.incidentTypes || []).filter((type) =>
+          type?.toLowerCase().includes(searchTerm)
+        );
       case "status":
-        return [
-          ...new Set(
-            incidentReportData.incidents
-              .map((i) => i.status)
-              .filter((status) => status.toLowerCase().includes(searchTerm))
-          ),
-        ];
+        return (data.statusOptions || []).filter((status) =>
+          status?.toLowerCase().includes(searchTerm)
+        );
       case "personnel":
-        return [
-          ...new Set(
-            incidentReportData.incidents
-              .map((i) => i.personnel)
-              .filter((person) => person.toLowerCase().includes(searchTerm))
-          ),
-        ];
+        return (data.personnelList || []).filter((person) =>
+          person?.toLowerCase().includes(searchTerm)
+        );
       case "location":
-        return locations.filter((loc) =>
-          loc.toLowerCase().includes(searchTerm)
+        return (data.locations || []).filter((loc) =>
+          loc?.toLowerCase().includes(searchTerm)
         );
       case "cameraId":
-        return cameraIds.filter((cam) =>
-          cam.toLowerCase().includes(searchTerm)
+        return (data.cameraIds || []).filter((cam) =>
+          cam?.toLowerCase().includes(searchTerm)
         );
       default:
         return [];
     }
   };
 
-  // Chart data for incident trends
+  // Chart data for incident trends - with null checks
   const incidentTrendsChartData = {
-    labels: incidentReportData.statistics.incidentTrends.categories.map(
-      (c) => c.name
+    labels: (data.statistics?.incidentTrends?.categories || []).map(
+      (c) => c?.name || ""
     ),
     datasets: [
       {
         label: "Incidents",
-        data: incidentReportData.statistics.incidentTrends.categories.map(
-          (c) => c.value
+        data: (data.statistics?.incidentTrends?.categories || []).map(
+          (c) => c?.value || 0
         ),
         backgroundColor: "#F8F5EC",
         borderColor: "#9F8D64",
@@ -351,16 +339,16 @@ const IncidentReport = () => {
     ],
   };
 
-  // Chart data for camera activity
+  // Chart data for camera activity - with null checks
   const cameraActivityChartData = {
-    labels: incidentReportData.statistics.cameraActivity.locations.map(
-      (l) => l.name
+    labels: (data.statistics?.cameraActivity?.locations || []).map(
+      (l) => l?.name || ""
     ),
     datasets: [
       {
         label: "Activity Hours",
-        data: incidentReportData.statistics.cameraActivity.locations.map(
-          (l) => l.value
+        data: (data.statistics?.cameraActivity?.locations || []).map(
+          (l) => l?.value || 0
         ),
         borderColor: "#9F8D64",
         backgroundColor: "rgba(159, 141, 100, 0.1)",
@@ -392,6 +380,55 @@ const IncidentReport = () => {
       },
     },
   };
+
+  // Handle report download
+  const handleDownloadReport = async () => {
+    try {
+      const token = cookies.token;
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await axios.post(
+        BASE + "api/incidents/report",
+        filters,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          responseType: "blob",
+        }
+      );
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "incident_report.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      setError(err.message);
+      console.error("Error downloading report:", err);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="loader">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-red-500">Error: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 p-6">
@@ -480,7 +517,6 @@ const IncidentReport = () => {
               </div>
             )}
           </div>
-          {/* Click outside to close dropdown */}
           {dropdowns.location && (
             <div
               className="fixed inset-0 z-0"
@@ -547,7 +583,6 @@ const IncidentReport = () => {
               </div>
             )}
           </div>
-          {/* Click outside to close dropdown */}
           {dropdowns.cameraId && (
             <div
               className="fixed inset-0 z-0"
@@ -562,7 +597,7 @@ const IncidentReport = () => {
         <div className="w-full md:w-2/5 bg-[#F8F5EC] rounded-lg p-6">
           <h2 className="text-xl font-bold mb-6">Recent Reports</h2>
           <div className="space-y-4">
-            {incidentReportData.recentReports.map((report) => (
+            {(data.recentReports || []).map((report) => (
               <div
                 key={report.id}
                 className="flex justify-between items-center"
@@ -634,7 +669,6 @@ const IncidentReport = () => {
                   </div>
                 </div>
               )}
-              {/* Click outside to close dropdown */}
               {dropdowns[dropdown] && (
                 <div
                   className="fixed inset-0 z-0"
@@ -669,25 +703,36 @@ const IncidentReport = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredIncidents.map((incident) => (
-              <tr key={incident.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  {incident.timestamp}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  {incident.location}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  {incident.event}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  {incident.personnel}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <StatusBadge status={incident.status} />
+            {filteredIncidents.length > 0 ? (
+              filteredIncidents.map((incident) => (
+                <tr key={incident.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {incident.timestamp}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {incident.location}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {incident.event}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {incident.personnel}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <StatusBadge status={incident.status} />
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan="5"
+                  className="px-6 py-4 text-center text-sm text-gray-500"
+                >
+                  No incidents found matching your filters
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
@@ -696,20 +741,7 @@ const IncidentReport = () => {
       <div className="flex gap-4">
         <button
           className="px-4 py-2 bg-green-600 text-white rounded-md flex items-center gap-2 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-          onClick={() => {
-            // Prepare data for download
-            const reportData = {
-              filters,
-              incidents: filteredIncidents,
-              statistics: incidentReportData.statistics,
-              generatedAt: new Date().toISOString(),
-            };
-            console.log(
-              "Downloading report:",
-              JSON.stringify(reportData, null, 2)
-            );
-            // In a real app, this would trigger a download
-          }}
+          onClick={handleDownloadReport}
         >
           Download Report
           <svg
@@ -747,56 +779,56 @@ const IncidentReport = () => {
         </button>
       </div>
 
-      {/* Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-        {/* Incident Trends */}
-        <div>
-          <div className="mb-4">
-            <h2 className="text-xl font-bold">Incident Trends</h2>
-            <div className="flex items-end gap-2">
-              <div className="text-3xl font-bold">
-                {incidentReportData.statistics.incidentTrends.total} incidents
+      {/* Stats Section - Only show if data exists */}
+      {data.statistics && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+          {/* Incident Trends */}
+          <div>
+            <div className="mb-4">
+              <h2 className="text-xl font-bold">Incident Trends</h2>
+              <div className="flex items-end gap-2">
+                <div className="text-3xl font-bold">
+                  {data.statistics.incidentTrends?.total || 0} incidents
+                </div>
+                <div className="text-green-600 text-sm">
+                  Last 7 Days {data.statistics.incidentTrends?.change || "+0%"}
+                </div>
               </div>
-              <div className="text-green-600 text-sm">
-                Last 7 Days{" "}
-                {incidentReportData.statistics.incidentTrends.change}
-              </div>
+            </div>
+
+            <div className="bg-white p-4 rounded-lg border">
+              <Bar
+                data={incidentTrendsChartData}
+                options={chartOptions}
+                height={150}
+              />
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg border">
-            <Bar
-              data={incidentTrendsChartData}
-              options={chartOptions}
-              height={150}
-            />
-          </div>
-        </div>
-
-        {/* Camera Activity */}
-        <div>
-          <div className="mb-4">
-            <h2 className="text-xl font-bold">Camera Activity Levels</h2>
-            <div className="flex items-end gap-2">
-              <div className="text-3xl font-bold">
-                {incidentReportData.statistics.cameraActivity.totalHours} hours
-              </div>
-              <div className="text-red-600 text-sm">
-                Last 30 Days{" "}
-                {incidentReportData.statistics.cameraActivity.change}
+          {/* Camera Activity */}
+          <div>
+            <div className="mb-4">
+              <h2 className="text-xl font-bold">Camera Activity Levels</h2>
+              <div className="flex items-end gap-2">
+                <div className="text-3xl font-bold">
+                  {data.statistics.cameraActivity?.totalHours || 0} hours
+                </div>
+                <div className="text-red-600 text-sm">
+                  Last 30 Days {data.statistics.cameraActivity?.change || "+0%"}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="bg-white p-4 rounded-lg border">
-            <Line
-              data={cameraActivityChartData}
-              options={chartOptions}
-              height={150}
-            />
+            <div className="bg-white p-4 rounded-lg border">
+              <Line
+                data={cameraActivityChartData}
+                options={chartOptions}
+                height={150}
+              />
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
