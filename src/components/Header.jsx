@@ -22,8 +22,10 @@ const Header = () => {
   const getPageTitle = () => {
     const path = location.pathname;
 
-    if (path === "/") return "PPE Compliance - Executive Dashboard - Report";
-    if (path === "/health-monitoring") return "PPE Compliance";
+    if (path === "/overview") return "Dashboard";
+    if (path === "/feed") return "Feed";
+    if (path === "/performance") return "Performance";
+    if (path === "/incident-report") return "Incident Report";
     if (path === "/performance")
       return "PPE Compliance - Executive Dashboard - Analytics";
 
@@ -36,7 +38,7 @@ const Header = () => {
   return (
     <header className="border-b bg-white flex items-center justify-between p-4 relative">
       <h1 className="font-medium flex items-center gap-2">
-        <span className="bg-black text-white p-1">
+        {/* <span className="bg-black text-white p-1">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
@@ -53,7 +55,7 @@ const Header = () => {
             <path d="M8 11h8" />
             <path d="M8 15h6" />
           </svg>
-        </span>
+        </span> */}
         {getPageTitle()}
       </h1>
 

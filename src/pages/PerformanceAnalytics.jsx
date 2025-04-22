@@ -1,63 +1,22 @@
 import React, { useState } from "react";
 import { Search, ChevronDown, ChevronUp } from "lucide-react";
 import ChartLineGraph from "../components/ChartLineGraph";
+import DetectionBarGraph from "../components/DetectionBarGraph";
+import HealthHeatmap from "../components/HealthHeatmap";
 
 const cameras = [
   {
     id: 1,
     name: "Camera 1",
     location: "Office, Sector: Lobby",
-    image: "/lovable-uploads/2f4ef973-e22e-407f-9e67-721c9173b0e2.png",
+    image: "2f4ef973-e22e-407f-9e67-721c9173b0e2.png",
     analytics: {
       cost: "$100",
       period: "30 days",
-      data: [12, 19, 3, 5, 2, 3, 15], // Sample data for the chart
+      data: [12, 19, 3, 5, 2, 3, 15],
     },
   },
-  {
-    id: 2,
-    name: "Camera 2",
-    location: "Warehouse, Sector: Loading Bay",
-    image: "/lovable-uploads/689d9128-eb3f-4f2b-a00b-9f5a8bb0057a.png",
-    analytics: {
-      cost: "$85",
-      period: "30 days",
-      data: [5, 10, 8, 12, 6, 9, 7],
-    },
-  },
-  {
-    id: 3,
-    name: "Camera 3",
-    location: "Store, Sector: Checkout",
-    image: "/lovable-uploads/2f4ef973-e22e-407f-9e67-721c9173b0e2.png",
-    analytics: {
-      cost: "$120",
-      period: "30 days",
-      data: [18, 14, 10, 8, 12, 16, 20],
-    },
-  },
-  {
-    id: 4,
-    name: "Camera 4",
-    location: "Al Tajor, Sector: Oil Extraction",
-    image: "/lovable-uploads/689d9128-eb3f-4f2b-a00b-9f5a8bb0057a.png",
-    analytics: {
-      cost: "$150",
-      period: "30 days",
-      data: [22, 18, 25, 20, 15, 12, 18],
-    },
-  },
-  {
-    id: 5,
-    name: "Camera 5",
-    location: "Al Tajor, Sector: Stairs",
-    image: "/lovable-uploads/2f4ef973-e22e-407f-9e67-721c9173b0e2.png",
-    analytics: {
-      cost: "$75",
-      period: "30 days",
-      data: [3, 5, 8, 4, 7, 10, 6],
-    },
-  },
+  // ... other cameras (as already defined)
 ];
 
 const locations = ["All locations", "Office", "Warehouse", "Store", "Al Tajor"];
@@ -251,9 +210,7 @@ const PerformanceAnalytics = () => {
                     Report Cost: {camera.analytics.period}
                   </p>
                 </div>
-
                 <ChartLineGraph data={camera.analytics.data} className="mt-4" />
-
                 <div className="flex justify-between mt-2 text-xs text-gray-500">
                   <div>Jan 1</div>
                   <div>Jan 2</div>
@@ -267,6 +224,20 @@ const PerformanceAnalytics = () => {
             )}
           </div>
         ))}
+      </div>
+
+      {/* Detection Summary Section */}
+      <div className="mt-10">
+        <h2 className="text-2xl font-semibold mb-4">
+          Weekly Detection Summary
+        </h2>
+        <DetectionBarGraph />
+      </div>
+
+      {/* System Health Section */}
+      <div className="mt-10">
+        <h2 className="text-2xl font-semibold mb-4">System Health Overview</h2>
+        <HealthHeatmap />
       </div>
     </div>
   );

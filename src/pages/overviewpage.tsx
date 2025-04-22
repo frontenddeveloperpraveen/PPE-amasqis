@@ -31,6 +31,8 @@ function Overview() {
         return;
       }
 
+      console.log("Filters request ->", filters);
+
       const response = await axios.post(
         `${BASE}overview`,
         filters, // send filters object directly
@@ -42,9 +44,9 @@ function Overview() {
         }
       );
 
-      console.log("Overview data:", response.data);
+      console.log("Overview data (Response from server):", response.data);
       setdashboardData(response.data); // Update state with fetched data
-      // setisPageLoading(false);
+      setisPageLoading(false);
       // TODO: Handle data (e.g., set state)
     } catch (error) {
       console.error("Error fetching overview:", error);
@@ -113,21 +115,70 @@ function Overview() {
         name: "Entrance Camera",
         location: "Main Entrance",
         isLive: true,
-        streamUrl: "Praveen.mp4",
+        streamUrl: "output_1.mp4",
       },
       {
         id: 2,
         name: "Parking Lot",
         location: "North Parking",
-        isLive: false,
-        streamUrl: "http://172.25.160.37:5000/",
+        isLive: true,
+        streamUrl: "output_2.mp4",
       },
       {
         id: 3,
         name: "Reception",
         location: "Lobby Area",
-        isLive: false,
-        streamUrl: "rtsp://example.com/stream3",
+        isLive: true,
+        streamUrl: "output_3.mp4",
+      },
+      {
+        id: 4,
+        name: "Working Area",
+        location: "Working Area",
+        isLive: true,
+        streamUrl: "output_4.mp4",
+      },
+      {
+        id: 5,
+        name: "Stairs",
+        location: "Office",
+        isLive: true,
+        streamUrl: "output_5.mp4",
+      },
+      {
+        id: 6,
+        name: "Stairs",
+        location: "Main Office",
+        isLive: true,
+        streamUrl: "output_6.mp4",
+      },
+      {
+        id: 7,
+        name: "Working Area",
+        location: "Working Area",
+        isLive: true,
+        streamUrl: "output_7.mp4",
+      },
+      {
+        id: 8,
+        name: "Working Area",
+        location: "Working Area",
+        isLive: true,
+        streamUrl: "output_8.mp4",
+      },
+      {
+        id: 9,
+        name: "Working Area",
+        location: "Working Area",
+        isLive: true,
+        streamUrl: "output_9.mp4",
+      },
+      {
+        id: 10,
+        name: "Working Area",
+        location: "Working Area",
+        isLive: true,
+        streamUrl: "output_10.mp4",
       },
     ],
 

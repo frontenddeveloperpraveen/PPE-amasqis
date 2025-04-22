@@ -56,14 +56,15 @@ function CameraCard({ camera }) {
               ref={videoRef}
               className="w-full h-full object-cover"
               muted
+              loop
               autoPlay
               playsInline
               controls={false}
             />
-            <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full flex items-center">
+            {/* <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full flex items-center">
               <span className="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></span>
               LIVE
-            </span>
+            </span> */}
             <button
               className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white p-1 rounded-full"
               onClick={() => videoRef.current?.requestFullscreen()}

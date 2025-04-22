@@ -34,8 +34,8 @@ function Searchbar({
   const [incidentSearchTerm, setIncidentSearchTerm] = useState("");
 
   // Selected values
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedTime, setSelectedTime] = useState("00:00");
+  const [selectedDate, setSelectedDate] = useState("All");
+  const [selectedTime, setSelectedTime] = useState("All");
   const [selectedLocation, setSelectedLocation] = useState("All locations");
   const [selectedCamera, setSelectedCamera] = useState("All cameras");
   const [selectedTimeFilter, setSelectedTimeFilter] = useState("All time");
@@ -101,15 +101,36 @@ function Searchbar({
     }
   };
 
+  // const fetchCameras = async () => {
+  //   console.log("Fetching cameras...", cookies);
+  //   setLoadingCameras(true);
+  //   try {
+  //     const response = await axios.get(BASE + "api/overview/cameras", {
+  //       headers: {
+  //         Authorization: `Bearer ${cookies.token}`,
+  //       },
+  //     });
+  //     console.log("Cameras response:", response.data);
+  //     setCameras(response.data.cameras);
+  //   } catch (error) {
+  //     console.error("Error fetching cameras:", error);
+  //   } finally {
+  //     setLoadingCameras(false);
+  //   }
+  // };
+
   const fetchCameras = async () => {
     console.log("Fetching cameras...", cookies);
     setLoadingCameras(true);
     try {
-      const response = await axios.get(BASE + "api/overview/cameras", {
-        headers: {
-          Authorization: `Bearer ${cookies.token}`,
-        },
-      });
+      const response = await axios.get(
+        BASE + "api/overview/cameras?location=" + selectedLocation,
+        {
+          // headers: {
+          //   Authorization: Bearer ${cookies.token},
+          // },
+        }
+      );
       console.log("Cameras response:", response.data);
       setCameras(response.data.cameras);
     } catch (error) {
@@ -210,7 +231,7 @@ function Searchbar({
   const triggerFilterChange = () => {
     if (onFilterChange) {
       const filters = {
-        // searchQuery,
+        searchQuery,
         location:
           selectedLocation === "All locations" ? "All" : selectedLocation,
         camera: selectedCamera === "All cameras" ? "All" : selectedCamera,

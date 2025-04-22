@@ -22,13 +22,13 @@ const Sidebar = () => {
         <div className="flex items-center space-x-2">
           <div className="h-9 w-10 rounded-full bg-gray-100 flex items-center justify-center">
             <img
-              src="/lovable-uploads/d81ce90e-3c44-4407-98e5-424e2aa1244f.png"
+              src="/logo/logo.png"
               alt="Logo"
               className="h-8 w-8 rounded-full"
             />
           </div>
           <div>
-            <h3 className="font-medium text-sm">Acme Inc.</h3>
+            <h3 className="font-medium text-sm">MVS x AI</h3>
             <p className="text-xs text-gold">Petroleum & Gas Surveillance</p>
           </div>
         </div>

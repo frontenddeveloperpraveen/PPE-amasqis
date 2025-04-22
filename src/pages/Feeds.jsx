@@ -12,7 +12,78 @@ function Feeds() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
-  const [cameraData, setCameraData] = useState([]);
+  const [cameraData, setCameraData] = useState([
+    {
+      id: 1,
+      name: "Entrance Camera",
+      location: "Main Entrance",
+      isLive: true,
+      streamUrl: "output_1.mp4",
+    },
+    {
+      id: 2,
+      name: "Parking Lot",
+      location: "North Parking",
+      isLive: true,
+      streamUrl: "output_2.mp4",
+    },
+    {
+      id: 3,
+      name: "Reception",
+      location: "Lobby Area",
+      isLive: true,
+      streamUrl: "output_3.mp4",
+    },
+    {
+      id: 4,
+      name: "Working Area",
+      location: "Working Area",
+      isLive: true,
+      streamUrl: "output_4.mp4",
+    },
+    {
+      id: 5,
+      name: "Stairs",
+      location: "Office",
+      isLive: true,
+      streamUrl: "output_5.mp4",
+    },
+    {
+      id: 6,
+      name: "Stairs",
+      location: "Main Office",
+      isLive: true,
+      streamUrl: "output_6.mp4",
+    },
+    {
+      id: 7,
+      name: "Working Area",
+      location: "Working Area",
+      isLive: true,
+      streamUrl: "output_7.mp4",
+    },
+    {
+      id: 8,
+      name: "Working Area",
+      location: "Working Area",
+      isLive: true,
+      streamUrl: "output_8.mp4",
+    },
+    {
+      id: 9,
+      name: "Working Area",
+      location: "Working Area",
+      isLive: true,
+      streamUrl: "output_9.mp4",
+    },
+    {
+      id: 10,
+      name: "Working Area",
+      location: "Working Area",
+      isLive: true,
+      streamUrl: "output_10.mp4",
+    },
+  ]);
 
   const [filters, setFilters] = useState({
     location: "All",
@@ -33,6 +104,8 @@ function Feeds() {
         console.error("No token found.");
         return;
       }
+
+      console.log({ ...filters, page: reset ? 1 : page });
 
       const response = await axios.post(
         `${BASE}feeds`,
@@ -67,7 +140,54 @@ function Feeds() {
   }, [filters]);
 
   const handleLoadMore = () => {
-    fetchCameras();
+    // fetchCameras();
+
+    setIsLoading(true);
+    setTimeout(() => {
+      setCameraData((prev) => [
+        ...prev,
+        {
+          id: 11,
+          name: "Entrance Camera",
+          location: "Main Entrance",
+          isLive: true,
+          streamUrl: "output_1.mp4",
+        },
+        {
+          id: 12,
+          name: "Parking Lot",
+          location: "North Parking",
+          isLive: true,
+          streamUrl: "output_2.mp4",
+        },
+        {
+          id: 13,
+          name: "Reception",
+          location: "Lobby Area",
+          isLive: true,
+          streamUrl: "output_3.mp4",
+        },
+        {
+          id: 14,
+          name: "Working Area",
+          location: "Working Area",
+          isLive: true,
+          streamUrl: "output_4.mp4",
+        },
+        {
+          id: 15,
+          name: "Stairs",
+          location: "Office",
+          isLive: true,
+          streamUrl: "output_5.mp4",
+        },
+      ]);
+
+      setHasMore(false);
+      setIsLoading(false);
+    }, 3000); // Simulate loading delay
+
+    // Code left here
   };
 
   return (
